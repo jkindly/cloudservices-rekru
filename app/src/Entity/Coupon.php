@@ -6,7 +6,10 @@ namespace App\Entity;
 
 use App\Repository\CouponRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
+#[UniqueEntity('code')]
 #[ORM\Entity(repositoryClass: CouponRepository::class)]
 class Coupon
 {
@@ -15,15 +18,21 @@ class Coupon
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     #[ORM\Column(length: 255, unique: true)]
     private ?string $code = null;
 
+    #[Assert\NotNull]
     #[ORM\Column]
     private ?int $leftCount = null;
 
+    #[Assert\NotNull]
     #[ORM\Column]
     private ?bool $isActive = null;
 
@@ -78,5 +87,21 @@ class Coupon
         $this->isActive = $isActive;
 
         return $this;
+    }
+
+    public function getAsArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'code' => $this->code,
+            'leftCount' => $this->leftCount,
+            'isActive' => $this->isActive,
+        ];
+    }
+
+    public function reduceLeftCount(): void
+    {
+        $this->leftCount--;
     }
 }
