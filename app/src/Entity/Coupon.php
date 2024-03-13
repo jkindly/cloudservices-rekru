@@ -29,6 +29,7 @@ class Coupon
     private ?string $code = null;
 
     #[Assert\NotNull]
+    #[Assert\PositiveOrZero]
     #[ORM\Column]
     private ?int $leftCount = null;
 

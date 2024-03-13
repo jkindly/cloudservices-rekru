@@ -9,6 +9,7 @@ use App\Repository\CouponRepository;
 use App\Service\CouponService;
 use App\Validator\CouponValidator;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ class CouponController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly CouponValidator $couponValidator,
         private readonly CouponService $couponService,
+        private readonly LoggerInterface $couponLogger,
     ) {
     }
 
@@ -77,7 +79,9 @@ class CouponController extends AbstractController
         $this->entityManager->persist($coupon);
         $this->entityManager->flush();
 
-        return $this->json($coupon, Response::HTTP_CREATED);
+        $this->couponLogger->info('Coupon created', $coupon->getAsArray());
+
+        return $this->json($coupon->getAsArray(), Response::HTTP_CREATED);
     }
 
     #[Route('/api/coupons/{id}', name: 'api_coupons_update', methods: ['PUT'])]
@@ -90,6 +94,8 @@ class CouponController extends AbstractController
 
         $data = $request->query->all();
 
+        $couponDataBefore = $coupon->getAsArray();
+
         $this->couponService->updateCoupon($coupon, $data);
 
         $errors = $this->couponValidator->validateCouponData($coupon);
@@ -98,6 +104,11 @@ class CouponController extends AbstractController
         }
 
         $this->entityManager->flush();
+
+        $this->couponLogger->info('Coupon updated', [
+            'dataBefore' => $couponDataBefore,
+            'dataAfter' => $coupon->getAsArray(),
+        ]);
 
         return $this->json($coupon->getAsArray());
     }
@@ -110,8 +121,12 @@ class CouponController extends AbstractController
             return $this->json(['error' => 'Coupon not found'], Response::HTTP_NOT_FOUND);
         }
 
+        $couponData = $coupon->getAsArray();
+
         $this->entityManager->remove($coupon);
         $this->entityManager->flush();
+
+        $this->couponLogger->info('Coupon deleted', $couponData);
 
         return $this->json([], Response::HTTP_NO_CONTENT);
     }
