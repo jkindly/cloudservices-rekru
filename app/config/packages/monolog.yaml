@@ -1,0 +1,7 @@
+monolog:
+    handlers:
+        coupon_log:
+            type: rotating_file
+            path: "%kernel.logs_dir%/coupon_%kernel.environment%.log"
+            level: debug
+            max_files: 10
